@@ -1,34 +1,98 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import {
+  LayoutDashboard,
+  Briefcase,
+  CalendarCheck,
+  Users,
+  UserCircle,
+  MessageCircle,
+  Folder,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 export default function Sidebar() {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState<boolean | null>(null); // null until loaded
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem("sidebar-open");
+    setOpen(stored === null ? true : stored === "true"); // default: open
+  }, []);
+
+  // Save whenever state changes
+  useEffect(() => {
+    if (open !== null) {
+      localStorage.setItem("sidebar-open", String(open));
+    }
+  }, [open]);
+
+  if (open === null) return null; // prevent flicker
+
+  const menus = [
+    { name: "Dashboard", href: "/hr/dashboard", icon: LayoutDashboard },
+    { name: "Jobs", href: "/hr/jobs", icon: Briefcase },
+    { name: "Interviews", href: "/hr/interviews", icon: CalendarCheck },
+    { name: "Candidates", href: "/hr/candidates", icon: Users },
+    { name: "Recruiters", href: "/hr/recruiters", icon: UserCircle },
+    { name: "Chat", href: "/hr/chat", icon: MessageCircle },
+    { name: "Questions Bank", href: "/hr/questions", icon: Folder },
+    { name: "Calendar", href: "/hr/calendar", icon: Calendar },
+  ];
 
   return (
-    <aside
-      className={`bg-gray-900 text-white h-screen transition-all duration-300 ${
-        open ? "w-64" : "w-16"
-      }`}
-    >
+    <div className="relative flex">
+      {/* Sidebar */}
+      <aside
+        className={`h-screen transition-all duration-50 border border-[#708993]  ${open ? "w-72" : "w-16"
+          }`}
+        style={{ backgroundColor: "#19183B" }}
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-center py-5 border-[#708993]">
+          {open ? (
+            <>
+              <span className="text-[#A1C2BD] font-bold text-xl">IM</span>
+              <span className="ml-2 text-[#E7F2EF] text-lg">Portal</span>
+            </>
+          ) : (
+            <span className="text-[#A1C2BD] font-bold text-xl">IMP</span>
+          )}
+        </div>
+
+
+        {/* Menu */}
+        <nav className="mt-5">
+          {menus.map((menu, idx) => (
+            <Link
+              key={idx}
+              href={menu.href}
+              className="flex items-center gap-3 px-4 py-2 rounded-md transition-colors"
+              style={{
+                color: "#A1C2BD",
+              }}
+            >
+              <menu.icon size={20} />
+              {open && <span>{menu.name}</span>}
+            </Link>
+          ))}
+        </nav>
+      </aside>
+
+      {/* Toggle button */}
       <button
         onClick={() => setOpen(!open)}
-        className="p-2 w-full bg-gray-800 hover:bg-gray-700"
+        className="absolute -right-3 top-12 border rounded-full p-1"
+        style={{
+          backgroundColor: "#A1C2BD",
+          color: "#19183B",
+        }}
       >
-        {open ? "" : "☰"}
+        {open ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
       </button>
-
-      <nav className="mt-4 space-y-2 px-2">
-        <Link href="/hr/applicants" className="block py-2 px-3 rounded hover:bg-gray-700">
-          Applicants
-        </Link>
-        <Link href="/hr/interviews" className="block py-2 px-3 rounded hover:bg-gray-700">
-          Interviews
-        </Link>
-        <Link href="/hr/reports" className="block py-2 px-3 rounded hover:bg-gray-700">
-          Reports
-        </Link>
-      </nav>
-    </aside>
+    </div>
   );
 }
