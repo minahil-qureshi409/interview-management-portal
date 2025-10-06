@@ -36,18 +36,18 @@ export default function Sidebar() {
     { name: "Dashboard", href: "/hr/dashboard", icon: LayoutDashboard },
     { name: "Jobs", href: "/hr/jobs", icon: Briefcase },
     { name: "Interviews", href: "/hr/interviews", icon: CalendarCheck },
-    { name: "Candidates", href: "/hr/candidates", icon: Users },
+    { name: "Candidates", href: "/candidates", icon: Users },
     { name: "Recruiters", href: "/hr/recruiters", icon: UserCircle },
-    { name: "Chat", href: "/hr/chat", icon: MessageCircle },
-    { name: "Questions Bank", href: "/hr/questions", icon: Folder },
-    { name: "Calendar", href: "/hr/calendar", icon: Calendar },
+    // { name: "Chat", href: "/hr/chat", icon: MessageCircle },
+    // { name: "Questions Bank", href: "/hr/questions", icon: Folder },
+    // { name: "Calendar", href: "/hr/calendar", icon: Calendar },
   ];
 
   return (
     <div className="relative flex">
       {/* Sidebar */}
       <aside
-        className={`h-screen transition-all duration-50 border border-[#708993]  ${open ? "w-72" : "w-16"
+        className={`vh-100 transition-all duration-50 border border-[#708993]  ${open ? "w-72" : "w-16"
           }`}
         style={{ backgroundColor: "#19183B" }}
       >
