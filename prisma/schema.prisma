@@ -27,3 +27,77 @@ model Application {
   createdAt  DateTime @default(now())
   job        Job      @relation(fields: [jobId], references: [id])
 }
+
+model Candidate {
+  id             Int              @id @default(autoincrement())
+  firstName      String
+  middleName     String?
+  lastName       String
+  candidateId    String?          @unique
+  title          String?
+  company        String?
+  email          String   @unique
+  phone          String?
+
+  workExperience WorkExperience[]
+  education      Education[]
+  languageSkills LanguageSkill[]
+  travelMobility TravelMobility[]
+  documents      Document[]
+  moreInfo       String?
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model WorkExperience {
+  id                Int       @id @default(autoincrement())
+  companyName       String
+  title             String
+  fromDate          DateTime
+  endDate           DateTime?
+  country           String?
+  responsibilities  String?
+  candidateId       Int
+  candidate         Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+}
+
+model Education {
+  id            Int       @id @default(autoincrement())
+  institute     String
+  degree        String?
+  major         String?
+  fromDate      DateTime?
+  endDate       DateTime?
+  country       String?
+  candidateId   Int
+  candidate     Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+}
+
+model LanguageSkill {
+  id           Int      @id @default(autoincrement())
+  language     String
+  speaking     String?
+  reading      String?
+  writing      String?
+  candidateId  Int
+  candidate    Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+}
+
+model TravelMobility {
+  id                    Int      @id @default(autoincrement())
+  willingToRelocate     String?
+  availabilityForTravel String?
+  candidateId           Int
+  candidate             Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id           Int      @id @default(autoincrement())
+  fileName     String
+  fileUrl      String?
+  fileType     String?
+  candidateId  Int
+  candidate    Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+}
+

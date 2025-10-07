@@ -5,7 +5,7 @@ import CandidateForm from "@/components/CandidateForm";
 
 export default function CandidatePage() {
   const [extractedData, setExtractedData] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(true); // Open modal initially
+  const [isModalOpen, setIsModalOpen] = useState(true); // Modal opens initially
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
@@ -13,45 +13,42 @@ export default function CandidatePage() {
   const handleDataExtracted = (data) => {
     console.log("Extracted Data:", data);
     setExtractedData(data);
-    setIsModalOpen(false); // Close modal after extracting data
+    setIsModalOpen(false); // Close modal after extraction
   };
 
-  // Empty default form
+  // Empty form structure for fallback
   const emptyForm = {
-    personalInfo: { name: "", email: "", phone: "", address: "", linkedin: "" },
-    education: [
-      { degree: "", institution: "", startYear: "", endYear: "", grade: "" },
-    ],
-    workExperience: [
-      {
-        company: "",
-        role: "",
-        startDate: "",
-        endDate: "",
-        responsibilities: "",
-      },
-    ],
-    certifications: [{ name: "", organization: "", year: "" }],
-    languages: [{ language: "", proficiency: "" }],
+    firstName: "",
+    middleName: "",
+    lastName: "",
+    candidateId: "",
+    title: "",
+    company: "",
+    email: "",
+    phone: "",
+    workExperience: [],
+    education: [],
+    languageSkills: [],
+    travelMobility: [],
     documents: [],
     moreInfo: "",
   };
 
   return (
-    <div className="p2">
-      {/* Button to open modal if user wants to upload another resume */}
-      {!isModalOpen && !extractedData && (
+    <div className="p-3">
+      {/* Upload Resume Button */}
+      {!isModalOpen && (
         <div className="mb-4 flex justify-end">
           <button
             onClick={handleOpenModal}
-            className="px-2 py-2 bg-[#19183B] text-white rounded text-left hover:bg-blue-1000"
+            className="px-4 py-2 bg-[#19183B] text-white rounded hover:bg-[#161950d4]"
           >
             Upload Resume
           </button>
         </div>
       )}
 
-      {/* Resume Modal */}
+      {/* OCR Upload Modal */}
       {isModalOpen && (
         <ResumeUploadModal
           onDataExtracted={handleDataExtracted}
@@ -59,7 +56,7 @@ export default function CandidatePage() {
         />
       )}
 
-      {/* Candidate Form */}
+      {/* Candidate Form with Extracted Data */}
       <CandidateForm extractedData={extractedData || emptyForm} />
     </div>
   );
