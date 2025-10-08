@@ -12,6 +12,7 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  FileText,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -32,16 +33,18 @@ export default function Sidebar() {
 
   if (open === null) return null; // prevent flicker
 
-  const menus = [
-    { name: "Dashboard", href: "/hr/dashboard", icon: LayoutDashboard },
-    { name: "Jobs", href: "/hr/jobs", icon: Briefcase },
-    { name: "Interviews", href: "/hr/interviews", icon: CalendarCheck },
-    { name: "Candidates", href: "/candidates", icon: Users },
-    { name: "Recruiters", href: "/hr/recruiters", icon: UserCircle },
-    // { name: "Chat", href: "/hr/chat", icon: MessageCircle },
-    // { name: "Questions Bank", href: "/hr/questions", icon: Folder },
-    // { name: "Calendar", href: "/hr/calendar", icon: Calendar },
-  ];
+ const menus = [
+  { name: "Dashboard", href: "/hr/dashboard", icon: LayoutDashboard },
+  { name: "Jobs", href: "/hr/jobs", icon: Briefcase },
+  { name: "Interviews", href: "/hr/interviews", icon: CalendarCheck },
+  { name: "Applications", href: "/hr/applications", icon: FileText },
+  { name: "Candidates", href: "/candidates", icon: Users },
+  { name: "Recruiters", href: "/hr/recruiters", icon: UserCircle },
+  // { name: "Chat", href: "/hr/chat", icon: MessageCircle },
+  // { name: "Questions Bank", href: "/hr/questions", icon: Folder },
+  // { name: "Calendar", href: "/hr/calendar", icon: Calendar },
+];
+
 
   return (
     <div className="relative flex">

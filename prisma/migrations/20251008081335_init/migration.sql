@@ -1,14 +1,50 @@
-/*
-  Warnings:
+-- CreateEnum
+CREATE TYPE "ApplicationStatus" AS ENUM ('APPLIED', 'REVIEWING', 'INTERVIEW_SCHEDULED', 'REJECTED', 'HIRED');
 
-  - A unique constraint covering the columns `[candidateId]` on the table `Candidate` will be added. If there are existing duplicate values, this will fail.
-  - Added the required column `updatedAt` to the `Candidate` table without a default value. This is not possible if the table is not empty.
+-- CreateTable
+CREATE TABLE "Job" (
+    "id" SERIAL NOT NULL,
+    "title" TEXT NOT NULL,
+    "department" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "requirements" TEXT NOT NULL,
 
-*/
--- AlterTable
-ALTER TABLE "Candidate" ADD COLUMN     "candidateId" TEXT,
-ADD COLUMN     "moreInfo" TEXT,
-ADD COLUMN     "updatedAt" TIMESTAMP(3) NOT NULL;
+    CONSTRAINT "Job_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Application" (
+    "id" SERIAL NOT NULL,
+    "jobId" INTEGER NOT NULL,
+    "name" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "resumeUrl" TEXT NOT NULL,
+    "skills" TEXT,
+    "experience" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Application_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Candidate" (
+    "id" SERIAL NOT NULL,
+    "firstName" TEXT NOT NULL,
+    "middleName" TEXT,
+    "lastName" TEXT NOT NULL,
+    "candidateId" TEXT,
+    "title" TEXT,
+    "company" TEXT,
+    "email" TEXT NOT NULL,
+    "phone" TEXT,
+    "status" "ApplicationStatus" NOT NULL DEFAULT 'APPLIED',
+    "moreInfo" TEXT,
+    "skills" TEXT[],
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Candidate_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "WorkExperience" (
@@ -73,6 +109,12 @@ CREATE TABLE "Document" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Candidate_candidateId_key" ON "Candidate"("candidateId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Candidate_email_key" ON "Candidate"("email");
+
+-- AddForeignKey
+ALTER TABLE "Application" ADD CONSTRAINT "Application_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "WorkExperience" ADD CONSTRAINT "WorkExperience_candidateId_fkey" FOREIGN KEY ("candidateId") REFERENCES "Candidate"("id") ON DELETE CASCADE ON UPDATE CASCADE;

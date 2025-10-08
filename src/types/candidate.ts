@@ -45,6 +45,7 @@ export interface CandidateInput {
   company?: string;
   email: string;
   phone?: string;
+   skills?: string[];
   moreInfo?: string;
 
   workExperience?: WorkExperienceInput[];

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent  } from "react";
 // Import the ExtractedData interface from ResumeUploadModal for type safety
 import { ExtractedData } from "@/components/ResumeUploadModal";
 
@@ -12,78 +12,58 @@ const yesNoOptions = ["Yes", "No"];
 const degreeOptions = ["Bachelors", "Masters", "PhD", "Diploma", "Certificate"]; // Added Certificate to match parsing
 const proficiencyOptions = ["Basic", "Intermediate", "Fluent", "Native", "Conversational", "Beginner", "Proficient"]; // Added more from parsing
 
+interface CandidateFormProps {
+  extractedData: ExtractedData;
+  onSubmitSuccess: () => void; 
+   resumeFile: File | null;
+}
+
 /* --- Component --- */
-export default function CandidateForm({ extractedData }: { extractedData: ExtractedData }) {
-  const [formData, setFormData] = useState({
-    workExperience: [],
-    education: [],
-    languageSkills: [],
-    travelMobility: [],
-    documents: [],
-    moreInfo: "",
-    firstName: "",
-    middleName: "",
-    lastName: "",
-    candidateId: "",
-    title: "", // This is more a 'job title' than salutation - check if intended
-    company: "",
-    email: "",
-    phone: "",
-    // If you have a skills field in your form, add it here:
-    skills: [], // Example: If your form expects an array of strings for skills
-    // ... other default values
+export default function CandidateForm({ extractedData, onSubmitSuccess, resumeFile  }: CandidateFormProps)  {
+  // Don't duplicate field names in initial state
+  const [formData, setFormData] = useState(() => {
+    // Create initial state based on extractedData if it exists
+    const initialState = {
+      workExperience: [],
+      education: [],
+      languageSkills: [],
+      travelMobility: [],
+      documents: [] as File[],
+      moreInfo: "",
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      candidateId: "",
+      title: "",
+      company: "",
+      email: "",
+      phone: "",
+      skills: [],
 
-    // Initial population from extractedData
-    // Ensure that extractedData arrays are transformed to match the defaultTemplates structure
-    ...(extractedData || {}),
-    workExperience: extractedData?.workExperience?.map(exp => ({
-        companyName: exp.companyName || "",
-        title: exp.title || "Extracted Role",
-        currentlyWorking: "", // Cannot extract this from OCR, will be default
-        fromDate: "", // Can be extracted if date parsing becomes more granular
-        endDate: "", // Same as above
-        country: "", // Cannot extract from OCR, will be default
-        responsibilities: exp.responsibilities || "",
-    })) || [],
-    education: extractedData?.education?.map(edu => ({
-        institute: edu.institution || "",
-        specifyOther: "",
-        country: "",
-        degree: edu.degree || "",
-        major: "", // Cannot extract from OCR
-        fromDate: "", // Can be extracted if date parsing becomes more granular
-        endDate: "", // Same as above
-    })) || [],
-    // MODIFIED: Map extracted 'speaking' to form's 'speaking' and leave others blank
-    languageSkills: extractedData?.languageSkills?.map(lang => ({
-        language: lang.language || "",
-        speaking: lang.speaking || "", // Map to speaking if extracted
-        reading: lang.reading || "",
-        writing: lang.writing || "",
-    })) || [],
-  });
+      
+    };
 
-  // Use useEffect to update formData when extractedData changes (e.g., after modal closes)
-  useEffect(() => {
+    // If extractedData exists, merge it with initial state
     if (extractedData) {
-      setFormData(prev => ({
-        ...prev,
-        firstName: extractedData.firstName || prev.firstName,
-        lastName: extractedData.lastName || prev.lastName,
-        email: extractedData.email || prev.email,
-        phone: extractedData.phone || prev.phone,
-        // If you add a skills input to your form:
-        skills: extractedData.skills || prev.skills, // Update skills array
-
+      return {
+        ...initialState,
+        // Personal info fields
+        firstName: extractedData.firstName || "",
+        lastName: extractedData.lastName || "",
+        email: extractedData.email || "",
+        phone: extractedData.phone || "",
+        skills: extractedData.skills || [],
+        
+        // Arrays need to be mapped to match your form structure
         workExperience: extractedData.workExperience?.map(exp => ({
             companyName: exp.companyName || "",
-            title: exp.title || "Extracted Role",
+            title: exp.title || "Position",
             currentlyWorking: "",
             fromDate: "",
             endDate: "",
             country: "",
             responsibilities: exp.responsibilities || "",
-        })) || prev.workExperience,
+        })) || [],
         education: extractedData.education?.map(edu => ({
             institute: edu.institution || "",
             specifyOther: "",
@@ -92,20 +72,68 @@ export default function CandidateForm({ extractedData }: { extractedData: Extrac
             major: "",
             fromDate: "",
             endDate: "",
-        })) || prev.education,
-        // MODIFIED: Map extracted 'speaking' to form's 'speaking' and leave others blank
+        })) || [],
         languageSkills: extractedData.languageSkills?.map(lang => ({
             language: lang.language || "",
-            speaking: lang.speaking || "", // Map to speaking if extracted
+            speaking: lang.speaking || "",
             reading: lang.reading || "",
             writing: lang.writing || "",
-        })) || prev.languageSkills,
-        // Any other top-level fields
-      }));
+        })) || [],
+      };
     }
-  }, [extractedData]); // Re-run when extractedData prop changes
 
+    return initialState;
+  });
 
+  // Add console log to debug
+  console.log("Initial formData state:", formData);
+  console.log("Received extractedData:", extractedData);
+
+  useEffect(() => {
+    // We build a new state object based on all incoming props
+    // to prevent race conditions.
+    const getUpdatedState = (prev: typeof formData) => {
+      let updated = { ...prev };
+
+      // 1. Handle extractedData (if it exists)
+      if (extractedData && Object.keys(extractedData).length > 0) {
+        updated = {
+          ...updated,
+          firstName: extractedData.firstName || prev.firstName,
+          lastName: extractedData.lastName || prev.lastName,
+          email: extractedData.email || prev.email,
+          phone: extractedData.phone || prev.phone,
+          skills: extractedData.skills || prev.skills,
+          workExperience: extractedData.workExperience?.map(exp => ({
+            companyName: exp.companyName || "", title: exp.title || "Position",
+            currentlyWorking: "", fromDate: "", endDate: "", country: "",
+            responsibilities: exp.responsibilities || "",
+          })) || prev.workExperience,
+          education: extractedData.education?.map(edu => ({
+            institute: edu.institution || "", specifyOther: "", country: "",
+            degree: edu.degree || "", major: "", fromDate: "", endDate: "",
+          })) || prev.education,
+          languageSkills: extractedData.languageSkills?.map(lang => ({
+            language: lang.language || "", speaking: "", reading: "", writing: "",
+          })) || prev.languageSkills,
+        };
+      }
+
+      // 2. Handle resumeFile (if it exists and is not already in the list)
+      if (resumeFile) {
+        const fileExists = updated.documents.some(doc => doc.name === resumeFile.name && doc.size === resumeFile.size);
+        if (!fileExists) {
+          // Add the resume file to the documents array
+          updated.documents = [resumeFile, ...updated.documents];
+        }
+      }
+
+      return updated;
+    };
+
+    setFormData(getUpdatedState);
+
+  }, [extractedData, resumeFile]); // Dependency array now watches both props
   // Use a map so each "section" can remember which index is open independently
   const [openIndices, setOpenIndices] = useState<{ [key: string]: number | null }>({
     workExperience: null,
@@ -115,12 +143,12 @@ export default function CandidateForm({ extractedData }: { extractedData: Extrac
   });
 
   // Toggle accordion for a given section and index
- const toggleAccordion = (section: string, index: number) => {
-  setOpenIndices((prev) => ({
-    ...prev,
-    [section]: prev?.[section] === index ? null : index,
-  }));
-};
+  const toggleAccordion = (section: string, index: number) => {
+    setOpenIndices((prev) => ({
+      ...prev,
+      [section]: prev?.[section] === index ? null : index,
+    }));
+  };
 
 
   // Generic change handler (works for top-level fields and for array sections)
@@ -186,22 +214,48 @@ export default function CandidateForm({ extractedData }: { extractedData: Extrac
     },
   };
 
-  const handleDocumentsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      documents: Array.from(e.target.files || []),
-    }));
+  const handleDocumentsChange = (e: ChangeEvent<HTMLInputElement>) => {
+    // 1. Create an array from the FileList, or an empty array if it's null.
+    // This variable 'newFiles' is now guaranteed to be of type File[].
+    const newFiles = e.target.files ? Array.from(e.target.files) : [];
+
+    // 2. Only proceed if new files were actually selected.
+    if (newFiles.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        // 3. Now you are spreading a definite Array, which satisfies TypeScript.
+        documents: [...prev.documents, ...newFiles],
+      }));
+    }
   };
 
   const handleSubmit = async () => {
+     // Create FormData for file uploads
+    const submissionData = new FormData();
+
+    // Append all form fields as a single JSON string
+    // This is a common pattern for mixing files and JSON
+    submissionData.append('jsonData', JSON.stringify({ ...formData, documents: undefined }));
+
+    // Append each file
+    formData.documents.forEach((file) => {
+      submissionData.append('documents', file);
+    });
     try {
       const res = await fetch("/api/candidates/submit", {
         method: "POST",
-        body: JSON.stringify(formData),
-        headers: { "Content-Type": "application/json" },
+ body: submissionData,
+        // body: JSON.stringify(formData),
+        // headers: { "Content-Type": "application/json" },
       });
-      const data = await res.json();
+
+      if (!res.ok) { // Check if the response was successful
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      
+      await res.json();
       alert("Form submitted successfully!");
+      onSubmitSuccess(); // <--- CALL THIS ON SUCCESS
     } catch (err) {
       console.error(err);
       alert("Failed to submit form");
@@ -782,7 +836,19 @@ export default function CandidateForm({ extractedData }: { extractedData: Extrac
             onChange={handleDocumentsChange}
             className="border border-gray-300 p-2 rounded-md w-full bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
-        </section>
+          {/* --- NEW: VISUAL CONFIRMATION --- */}
+          {/* Display the list of uploaded files */}
+          {formData.documents.length > 0 && (
+            <div className="mt-4">
+              <p className="font-semibold text-gray-700">Attached files:</p>
+              <ul className="list-disc list-inside mt-2 text-sm text-gray-600">
+                {formData.documents.map((file, index) => (
+                  <li key={index}>{file.name}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+      </section>
 
         {/* Submit */}
         <div className="flex justify-end mt-4">
