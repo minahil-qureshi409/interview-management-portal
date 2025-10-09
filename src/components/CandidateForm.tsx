@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, ChangeEvent  } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
 // Import the ExtractedData interface from ResumeUploadModal for type safety
 import { ExtractedData } from "@/components/ResumeUploadModal";
 
@@ -14,12 +14,12 @@ const proficiencyOptions = ["Basic", "Intermediate", "Fluent", "Native", "Conver
 
 interface CandidateFormProps {
   extractedData: ExtractedData;
-  onSubmitSuccess: () => void; 
-   resumeFile: File | null;
+  onSubmitSuccess: () => void;
+  resumeFile: File | null;
 }
 
 /* --- Component --- */
-export default function CandidateForm({ extractedData, onSubmitSuccess, resumeFile  }: CandidateFormProps)  {
+export default function CandidateForm({ extractedData, onSubmitSuccess, resumeFile }: CandidateFormProps) {
   // Don't duplicate field names in initial state
   const [formData, setFormData] = useState(() => {
     // Create initial state based on extractedData if it exists
@@ -40,7 +40,7 @@ export default function CandidateForm({ extractedData, onSubmitSuccess, resumeFi
       phone: "",
       skills: [],
 
-      
+
     };
 
     // If extractedData exists, merge it with initial state
@@ -53,31 +53,31 @@ export default function CandidateForm({ extractedData, onSubmitSuccess, resumeFi
         email: extractedData.email || "",
         phone: extractedData.phone || "",
         skills: extractedData.skills || [],
-        
+
         // Arrays need to be mapped to match your form structure
         workExperience: extractedData.workExperience?.map(exp => ({
-            companyName: exp.companyName || "",
-            title: exp.title || "Position",
-            currentlyWorking: "",
-            fromDate: "",
-            endDate: "",
-            country: "",
-            responsibilities: exp.responsibilities || "",
+          companyName: exp.companyName || "",
+          title: exp.title || "Position",
+          currentlyWorking: "",
+          fromDate: "",
+          endDate: "",
+          country: "",
+          responsibilities: exp.responsibilities || "",
         })) || [],
         education: extractedData.education?.map(edu => ({
-            institute: edu.institution || "",
-            specifyOther: "",
-            country: "",
-            degree: edu.degree || "",
-            major: "",
-            fromDate: "",
-            endDate: "",
+          institute: edu.institution || "",
+          specifyOther: "",
+          country: "",
+          degree: edu.degree || "",
+          major: "",
+          fromDate: "",
+          endDate: "",
         })) || [],
         languageSkills: extractedData.languageSkills?.map(lang => ({
-            language: lang.language || "",
-            speaking: lang.speaking || "",
-            reading: lang.reading || "",
-            writing: lang.writing || "",
+          language: lang.language || "",
+          speaking: lang.speaking || "",
+          reading: lang.reading || "",
+          writing: lang.writing || "",
         })) || [],
       };
     }
@@ -214,51 +214,37 @@ export default function CandidateForm({ extractedData, onSubmitSuccess, resumeFi
     },
   };
 
-  const handleDocumentsChange = (e: ChangeEvent<HTMLInputElement>) => {
-    // 1. Create an array from the FileList, or an empty array if it's null.
-    // This variable 'newFiles' is now guaranteed to be of type File[].
+   const handleDocumentsChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newFiles = e.target.files ? Array.from(e.target.files) : [];
-
-    // 2. Only proceed if new files were actually selected.
     if (newFiles.length > 0) {
-      setFormData((prev) => ({
-        ...prev,
-        // 3. Now you are spreading a definite Array, which satisfies TypeScript.
-        documents: [...prev.documents, ...newFiles],
-      }));
+      setFormData((prev) => ({ ...prev, documents: [...prev.documents, ...newFiles] }));
     }
   };
 
   const handleSubmit = async () => {
-     // Create FormData for file uploads
     const submissionData = new FormData();
-
-    // Append all form fields as a single JSON string
-    // This is a common pattern for mixing files and JSON
     submissionData.append('jsonData', JSON.stringify({ ...formData, documents: undefined }));
-
-    // Append each file
     formData.documents.forEach((file) => {
       submissionData.append('documents', file);
     });
+
     try {
       const res = await fetch("/api/candidates/submit", {
         method: "POST",
- body: submissionData,
-        // body: JSON.stringify(formData),
-        // headers: { "Content-Type": "application/json" },
+        body: submissionData,
       });
 
-      if (!res.ok) { // Check if the response was successful
-        throw new Error(`HTTP error! status: ${res.status}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
       }
-      
+
       await res.json();
       alert("Form submitted successfully!");
-      onSubmitSuccess(); // <--- CALL THIS ON SUCCESS
-    } catch (err) {
+      onSubmitSuccess();
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to submit form");
+      alert(`Failed to submit form: ${err.message}`);
     }
   };
 
@@ -848,7 +834,7 @@ export default function CandidateForm({ extractedData, onSubmitSuccess, resumeFi
               </ul>
             </div>
           )}
-      </section>
+        </section>
 
         {/* Submit */}
         <div className="flex justify-end mt-4">

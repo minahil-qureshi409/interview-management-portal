@@ -59,12 +59,15 @@ model Candidate {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  interviews Interview[] 
 }
 
 model WorkExperience {
   id               Int       @id @default(autoincrement())
   companyName      String
   title            String
+   currentlyWorking Boolean? 
   fromDate         DateTime
   endDate          DateTime?
   country          String?
@@ -76,6 +79,7 @@ model WorkExperience {
 model Education {
   id          Int       @id @default(autoincrement())
   institute   String
+  specifyOther String?  
   degree      String?
   major       String?
   fromDate    DateTime?
@@ -108,6 +112,19 @@ model Document {
   fileName    String
   fileUrl     String?
   fileType    String?
+  candidateId Int
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+}
+
+model Interview {
+  id              Int      @id @default(autoincrement())
+  interviewDate   DateTime
+  interviewType   String   // e.g., "Technical Screening", "HR Round"
+  interviewerName String
+  meetLink        String?
+  notes           String?
+  createdAt       DateTime @default(now())
+
   candidateId Int
   candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 }
