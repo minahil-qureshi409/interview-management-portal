@@ -254,14 +254,14 @@ export default function CandidateForm({ extractedData, onSubmitSuccess, resumeFi
         Candidate Application Form
       </h2>
 
-      <div className="overflow-y-auto px-6 py-0 space-y-8 flex-1 ">
+      <div className="overflow-y-auto px-6 py-0 space-y-8 flex-1 text-black ">
         {/* Personal Information */}
-        <section className=" rounded-lg p-2 pt-0 pb-3 mt-6 bg-[#f5f5f5] shadow-xl">
-          <h3 className="font-semibold text-xl sticky top-0  bg-[#f5f5f5] pb-3 pt-3 px-3 z-10 mb-3 border-b border-gray-300">
+        <section className=" rounded-lg p-2 pt-0 pb-3 mt-6 bg-[#f5f5f5] shadow-xl text-black">
+          <h3 className="font-semibold text-xl sticky top-0  bg-[#f5f5f5] pb-3 pt-3 px-3 z-10 mb-3 border-b border-gray-300 text-black">
             Personal Information
           </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-black">
             <input
               type="text"
               placeholder="First Name *"
@@ -269,7 +269,7 @@ export default function CandidateForm({ extractedData, onSubmitSuccess, resumeFi
               onChange={(e) =>
                 handleChange(null, null, "firstName", e.target.value)
               }
-              className="h-9 border border-gray-300 p-2 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="h-9 text-black border border-gray-300 p-2 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
               required
             />
             <input

@@ -2,16 +2,18 @@
 
 "use client";
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent,useEffect } from 'react';
 import { scheduleInterview } from '@/app/actions/interviewActions';
+import { Interview } from '@prisma/client';
 
 interface ScheduleInterviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   candidateId: number;
+   initialData?: Interview | null; 
 }
 
-export default function ScheduleInterviewModal({ isOpen, onClose, candidateId }: ScheduleInterviewModalProps) {
+export default function ScheduleInterviewModal({ isOpen, onClose, candidateId, initialData  }: ScheduleInterviewModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -23,6 +25,28 @@ export default function ScheduleInterviewModal({ isOpen, onClose, candidateId }:
   const [meetLink, setMeetLink] = useState('');
   const [notes, setNotes] = useState('');
 
+  // --- NEW: useEffect to pre-fill the form when editing ---
+  useEffect(() => {
+    if (initialData && isOpen) {
+      const interviewDate = new Date(initialData.interviewDate);
+      // Format date to 'YYYY-MM-DD' and time to 'HH:mm' for input fields
+      setDate(interviewDate.toISOString().split('T')[0]);
+      setTime(interviewDate.toTimeString().split(' ')[0].substring(0, 5));
+      setType(initialData.interviewType);
+      setInterviewer(initialData.interviewerName);
+      setMeetLink(initialData.meetLink || '');
+      setNotes(initialData.notes || '');
+    } else {
+      // Reset form when opening for a new interview
+      setDate('');
+      setTime('');
+      setType('Technical Screening');
+      setInterviewer('');
+      setMeetLink('');
+      setNotes('');
+    }
+  }, [initialData, isOpen]); // Rerun when the modal opens or initial data changes
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: FormEvent) => {
@@ -30,22 +54,28 @@ export default function ScheduleInterviewModal({ isOpen, onClose, candidateId }:
     setIsSubmitting(true);
     setError(null);
 
-    if (!date || !time || !interviewer) {
-      setError("Date, Time, and Interviewer are required.");
-      setIsSubmitting(false);
-      return;
-    }
+    // if (!date || !time || !interviewer) {
+    //   setError("Date, Time, and Interviewer are required.");
+    //   setIsSubmitting(false);
+    //   return;
+    // }
 
-    // Combine date and time into a single Date object
-    const interviewDate = new Date(`${date}T${time}`);
+    // // Combine date and time into a single Date object
+    // const interviewDate = new Date(`${date}T${time}`);
 
-    const result = await scheduleInterview(candidateId, {
-      interviewDate,
+     const fullDateString = `${date}T${time}`;
+
+      // --- MODIFIED: Pass the interview ID if we are editing ---
+    const interviewId = initialData?.id; 
+
+
+     const result = await scheduleInterview(candidateId, {
+      interviewDate: fullDateString,
       interviewType: type,
       interviewerName: interviewer,
       meetLink,
       notes,
-    });
+    }, interviewId); // Pass the optional ID
     
     setIsSubmitting(false);
 
@@ -58,7 +88,7 @@ export default function ScheduleInterviewModal({ isOpen, onClose, candidateId }:
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm text-black">
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg relative">
         <button onClick={onClose} className="absolute top-3 right-3 text-2xl text-gray-500 hover:text-gray-800">&times;</button>
         <h2 className="text-2xl font-bold mb-4">Schedule Interview</h2>

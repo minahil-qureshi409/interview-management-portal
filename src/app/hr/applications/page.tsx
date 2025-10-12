@@ -27,8 +27,8 @@ export default async function ApplicationsPage() {
   const candidates = await getCandidates();
 
   return (
-    <div className="container mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-6">Received Applications</h1>
+    <div className="container mx-auto p-8 text-black">
+      <h1 className="text-3xl font-bold mb-6 text-black">Received Applications</h1>
       {/* We pass the server-fetched data to a Client Component for interactivity */}
       <ApplicationsTable candidates={candidates} />
     </div>

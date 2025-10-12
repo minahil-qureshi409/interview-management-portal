@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import path from 'path';
 import { promises as fs } from 'fs';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client'; // <-- We only need to import the main namespace
 
 // HELPER FUNCTION to generate a unique ID for the candidate
 const generateCandidateId = async () => {
@@ -16,17 +16,14 @@ const generateCandidateId = async () => {
 
 export async function POST(req: NextRequest) {
   try {
-    // STEP 1: Parse the form data using the modern built-in parser.
-    // This one line replaces the entire 'busboy' helper function.
     const formData = await req.formData();
-
     const jsonDataString = formData.get('jsonData') as string | null;
+
     if (!jsonDataString) {
       return NextResponse.json({ error: 'Missing form data' }, { status: 400 });
     }
     const data = JSON.parse(jsonDataString);
 
-    // STEP 2: Handle file uploads concurrently.
     const documentFiles = formData.getAll('documents') as File[];
     const uploadDir = path.join(process.cwd(), "/public/uploads");
     await fs.mkdir(uploadDir, { recursive: true });
@@ -35,20 +32,16 @@ export async function POST(req: NextRequest) {
       documentFiles.map(async (file) => {
         const uniqueFilename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
         const filePath = path.join(uploadDir, uniqueFilename);
-
-        // Convert file to buffer and write to disk
         const buffer = Buffer.from(await file.arrayBuffer());
         await fs.writeFile(filePath, buffer);
-
         return {
-          fileName: file.name, // The original filename
+          fileName: file.name,
           fileUrl: `/uploads/${uniqueFilename}`,
           fileType: file.type,
         };
       })
     );
 
-    // STEP 3: Prepare the data for Prisma (this logic remains the same).
     const candidateId = await generateCandidateId();
     const candidateData = {
       candidateId,
@@ -84,16 +77,18 @@ export async function POST(req: NextRequest) {
       documents: { create: documentsToCreate },
     };
 
-    // STEP 4: Save to the database.
     const candidate = await prisma.candidate.create({ data: candidateData });
-
     return NextResponse.json({ message: "Candidate saved successfully", candidate }, { status: 201 });
 
   } catch (error) {
     console.error("[API] A fatal error occurred:", error);
+    
+    // --- THIS IS THE FINAL, CORRECT SYNTAX ---
+    // The error class is a property of the main 'Prisma' namespace.
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return NextResponse.json({ error: "A candidate with this email already exists." }, { status: 409 });
     }
+    
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
     return NextResponse.json({ error: "Failed to save candidate", details: errorMessage }, { status: 500 });
   }

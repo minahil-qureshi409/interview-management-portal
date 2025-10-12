@@ -2,26 +2,25 @@
 
 import { PrismaClient } from '@prisma/client';
 import { notFound } from 'next/navigation';
-import { CandidateActions } from '@/components/CandidateActions'; // Assuming this component exists
+import { CandidateActions } from '@/components/candidatesActions'; // Assuming this component exists
 
 const prisma = new PrismaClient();
 
-// This function fetches a single candidate with ALL their related data
+// fetches a single candidate with ALL their related data
 async function getCandidateProfile(id: number) {
   const candidate = await prisma.candidate.findUnique({
     where: { id },
     // Use 'select' to explicitly include optional fields and relations
     select: {
-      // --- Select all the scalar fields you need ---
       id: true,
       firstName: true,
-      middleName: true, // <-- THIS IS THE FIX
+      middleName: true, 
       lastName: true,
       title: true,
       email: true,
       phone: true,
       status: true,
-      // --- Also include all the relations you need ---
+      // --- all the relations you need ---
       workExperience: true,
       education: true,
       languageSkills: true,
@@ -49,29 +48,58 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
     return notFound();
   }
 
+  // Get the most recent interview, if it exists
+  const latestInterview = candidate.interviews.length > 0 ? candidate.interviews[0] : null;
+
   return (
-    <div className="container mx-auto p-4 sm:p-8 bg-gray-50 min-h-screen">
+    <div className="container mx-auto p-4 sm:p-8 bg-gray-50 min-h-screen text-black">
       <div className="bg-white p-6 sm:p-8 rounded-lg shadow-lg max-w-6xl mx-auto">
-        {/* Header */}
+        {/* --- Header --- */}
         <div className="flex justify-between items-start flex-col sm:flex-row">
-            <div className="mb-4 sm:mb-0">
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">{`${candidate.firstName} ${candidate.middleName} ${candidate.lastName}`}</h1>
-              <p className="text-xl text-gray-600 mt-1">{candidate.title || 'No Title Provided'}</p>
-              <div className="text-md text-gray-500 mt-2 space-x-4">
-                <span>{candidate.email}</span>
-                <span>|</span>
-                <span>{candidate.phone || 'No Phone Provided'}</span>
-              </div>
+          <div className="mb-4 sm:mb-0">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">
+              {`${candidate.firstName} ${candidate.middleName || ''} ${candidate.lastName}`}
+            </h1>
+            <p className="text-xl text-gray-600 mt-1">{candidate.title || 'No Title Provided'}</p>
+            <div className="text-md text-gray-500 mt-2 space-x-4">
+              <span>{candidate.email}</span>
+              <span>|</span>
+              <span>{candidate.phone || 'No Phone Provided'}</span>
             </div>
-            {/* Action buttons */}
-            <CandidateActions candidateId={candidate.id} currentStatus={candidate.status} />
+          </div>
+          {/* --- Action buttons --- */}
+          <CandidateActions candidateId={candidate.id} currentStatus={candidate.status} latestInterview={latestInterview} />
         </div>
 
         <hr className="my-6" />
 
+        {/* Scheduled Interviews & Feedback Section */}
+        {candidate.interviews.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-2xl font-semibold mb-4 border-b pb-2">Interviews</h2>
+            <div className="space-y-6">
+              {candidate.interviews.map(interview => (
+                <div key={interview.id} className="p-4 border rounded-md bg-gray-50">
+                  <h3 className="font-bold text-lg">{interview.interviewType} with {interview.interviewerName}</h3>
+                  <p className="text-sm text-gray-500">{new Date(interview.interviewDate).toLocaleString()}</p>
+                  
+                  {/*Display the feedback --- */}
+                  {interview.feedback && (
+                    <div className="mt-4 pt-4 border-t">
+                      <h4 className="font-semibold text-md">Feedback:</h4>
+                      <p className="mt-1 text-gray-700 whitespace-pre-wrap">{interview.feedback}</p>
+                    </div>
+                  )}
+
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Work Experience Section */}
         <div className="mt-8">
-            <h2 className="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2">Work Experience</h2>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2 text-black">Work Experience</h2>
             <div className="space-y-6">
               {candidate.workExperience.length > 0 ? (
                 candidate.workExperience.map(exp => (

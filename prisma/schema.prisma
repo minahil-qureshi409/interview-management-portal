@@ -32,6 +32,7 @@ enum ApplicationStatus {
   APPLIED
   REVIEWING
   INTERVIEW_SCHEDULED
+  INTERVIEW_COMPLETED
   REJECTED
   HIRED
 }
@@ -123,6 +124,7 @@ model Interview {
   interviewerName String
   meetLink        String?
   notes           String?
+  feedback        String?
   createdAt       DateTime @default(now())
 
   candidateId Int
