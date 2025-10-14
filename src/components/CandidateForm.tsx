@@ -291,14 +291,14 @@ export default function CandidateForm({ extractedData, onSubmitSuccess, resumeFi
               className="h-9 border border-gray-300 p-2 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
               required
             />
-            <input
+            {/* <input
               type="text"
               placeholder="Candidate ID (Auto Generated)"
               value={formData.candidateId || ""}
               readOnly
               className="h-9 border border-gray-300 p-2 rounded-md bg-gray-100 text-gray-500 cursor-not-allowed"
               disabled
-            />
+            /> */}
 
             <input
               type="text"

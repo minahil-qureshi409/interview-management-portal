@@ -3,8 +3,8 @@
 "use client";
 
 import { ApplicationStatus } from '@prisma/client';
-import { useState } from 'react'; // Make sure to import useState
-import ScheduleInterviewModal from './ScheduleInterviewModal'; // Import the new modal
+import { useState } from 'react'; 
+import ScheduleInterviewModal from './ScheduleInterviewModal'; 
 import { rejectCandidate } from '@/app/actions/interviewActions';
 
 interface CandidateActionsProps {

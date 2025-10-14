@@ -22,6 +22,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/components/CandidateForm.tsx", "src/components/ResumeUploadModal.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "declarations.d.ts", "src/components/CandidateForm.tsx", "src/components/ResumeUploadModal.jsx"],
   "exclude": ["node_modules"]
 }

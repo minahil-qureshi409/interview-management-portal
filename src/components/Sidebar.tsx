@@ -35,7 +35,7 @@ export default function Sidebar() {
 
  const menus = [
   { name: "Dashboard", href: "/hr/dashboard", icon: LayoutDashboard },
-  { name: "Jobs", href: "/hr/jobs", icon: Briefcase },
+  // { name: "Jobs", href: "/hr/jobs", icon: Briefcase },
   { name: "Interviews", href: "/hr/interviews", icon: CalendarCheck },
   { name: "Applications", href: "/hr/applications", icon: FileText },
   { name: "Candidates", href: "/candidates", icon: Users },
