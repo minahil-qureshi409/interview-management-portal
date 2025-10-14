@@ -92,6 +92,15 @@ export default function ResumeUploadModal({ onDataExtracted, onClose }: ResumeUp
           </label>
         </div>
 
+        {loading && (
+          <div className="my-4">
+            <p className="text-sm text-center text-gray-600 mb-2">Analyzing with AI... this may take a moment.</p>
+            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+              <div className="bg-blue-600 h-2 rounded-full animate-indeterminate-progress"></div>
+            </div>
+          </div>
+        )}
+
         {error && (
           <p className="text-sm text-center text-red-600 mb-4">{error}</p>
         )}

@@ -3,6 +3,33 @@ import { useState, useEffect, ChangeEvent } from "react";
 // Import the ExtractedData interface from ResumeUploadModal for type safety
 import { ExtractedData } from "@/components/ResumeUploadModal";
 
+// ... (keep your imports and parseDateString function)
+
+// --- NEW: FUZZY MATCHING HELPER FOR SELECTS ---
+/**
+ * Finds the best match from a list of options for a given AI-extracted value.
+ * It's case-insensitive and handles partial matches.
+ * @param value The string from the AI (e.g., "fluent", "bachelor")
+ * @param options The array of dropdown options (e.g., proficiencyOptions)
+ * @returns The best matching option from the list, or an empty string if no good match is found.
+ */
+const findBestMatch = (value: string | undefined, options: readonly string[]): string => {
+  if (!value) return "";
+
+  const lowerValue = value.toLowerCase();
+
+  // 1. Look for an exact case-insensitive match first
+  const exactMatch = options.find(opt => opt.toLowerCase() === lowerValue);
+  if (exactMatch) return exactMatch;
+
+  // 2. If no exact match, look for a partial match (e.g., AI says "Bachelor's", option is "Bachelors")
+  const partialMatch = options.find(opt => opt.toLowerCase().includes(lowerValue) || lowerValue.includes(opt.toLowerCase()));
+  if (partialMatch) return partialMatch;
+
+  // 3. If still no match, return empty string
+  return "";
+};
+
 /* --- Options --- */
 const countryOptions = ["Pakistan", "USA", "UK", "Other"];
 const stateOptions = ["State 1", "State 2", "No Selection"]; // These might need to be dynamic based on selected country
@@ -17,6 +44,33 @@ interface CandidateFormProps {
   onSubmitSuccess: () => void;
   resumeFile: File | null;
 }
+
+const parseDateString = (dateStr: string | undefined): string | null => {
+  if (!dateStr) return null;
+
+  // Handle "Present"
+  if (dateStr.toLowerCase().includes('present')) {
+    return null; // Don't set an end date for "Present"
+  }
+
+  try {
+    // Attempt to create a date object. This is very flexible.
+    const date = new Date(dateStr);
+
+    // Check if the date is valid
+    if (isNaN(date.getTime())) return null;
+
+    const year = date.getFullYear();
+    // getMonth() is 0-indexed, so we add 1
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    // For strings like "2020", getDate() might be incorrect, so we default to the 1st
+    const day = dateStr.includes(' ') ? date.getDate().toString().padStart(2, '0') : '01';
+
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    return null;
+  }
+};
 
 /* --- Component --- */
 export default function CandidateForm({ extractedData, onSubmitSuccess, resumeFile }: CandidateFormProps) {
@@ -98,23 +152,50 @@ export default function CandidateForm({ extractedData, onSubmitSuccess, resumeFi
       // 1. Handle extractedData (if it exists)
       if (extractedData && Object.keys(extractedData).length > 0) {
         updated = {
-          ...updated,
+          ...prev,
           firstName: extractedData.firstName || prev.firstName,
           lastName: extractedData.lastName || prev.lastName,
           email: extractedData.email || prev.email,
           phone: extractedData.phone || prev.phone,
           skills: extractedData.skills || prev.skills,
-          workExperience: extractedData.workExperience?.map(exp => ({
-            companyName: exp.companyName || "", title: exp.title || "Position",
-            currentlyWorking: "", fromDate: "", endDate: "", country: "",
-            responsibilities: exp.responsibilities || "",
-          })) || prev.workExperience,
-          education: extractedData.education?.map(edu => ({
-            institute: edu.institution || "", specifyOther: "", country: "",
-            degree: edu.degree || "", major: "", fromDate: "", endDate: "",
-          })) || prev.education,
+
+          workExperience: extractedData.workExperience?.map(exp => {
+            const dates = exp.dates?.split('-').map(d => d.trim());
+            const fromDate = parseDateString(dates?.[0]);
+            const endDate = parseDateString(dates?.[1]);
+
+            return {
+              companyName: exp.companyName || "",
+              title: exp.title || "",
+              // --- UPDATE FOR SELECT ---
+              currentlyWorking: exp.dates?.toLowerCase().includes('present') ? 'Yes' : (endDate ? 'No' : ''),
+              fromDate: fromDate || "",
+              endDate: endDate || "",
+              country: "", // AI doesn't provide this yet
+              responsibilities: exp.responsibilities || "",
+            };
+          }) || prev.workExperience,
+
+          education: extractedData.education?.map(edu => {
+            const endDate = parseDateString(edu.year);
+            return {
+              institute: edu.institution || "",
+              specifyOther: "",
+              country: "", // AI doesn't provide this yet
+              // --- UPDATE FOR SELECT ---
+              degree: findBestMatch(edu.degree, degreeOptions),
+              major: "",
+              fromDate: "",
+              endDate: endDate || "",
+            };
+          }) || prev.education,
+
           languageSkills: extractedData.languageSkills?.map(lang => ({
-            language: lang.language || "", speaking: "", reading: "", writing: "",
+            language: lang.language || "", // This is a text input, so no change needed
+            // --- UPDATE FOR SELECTS ---
+            speaking: findBestMatch(lang.speaking, proficiencyOptions),
+            reading: findBestMatch(lang.reading, proficiencyOptions),
+            writing: findBestMatch(lang.writing, proficiencyOptions),
           })) || prev.languageSkills,
         };
       }
@@ -214,7 +295,7 @@ export default function CandidateForm({ extractedData, onSubmitSuccess, resumeFi
     },
   };
 
-   const handleDocumentsChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleDocumentsChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newFiles = e.target.files ? Array.from(e.target.files) : [];
     if (newFiles.length > 0) {
       setFormData((prev) => ({ ...prev, documents: [...prev.documents, ...newFiles] }));

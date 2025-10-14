@@ -1,3 +1,5 @@
+// components/Sidebar.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -25,48 +27,47 @@ interface MenuItem {
 }
 
 export default function Sidebar() {
-    const { data: session, status } = useSession();
+  const { data: session, status } = useSession();
   const userRole = session?.user?.role;
   const pathname = usePathname();
 
-  const [open, setOpen] = useState<boolean | null>(null); // null until loaded
+  const [open, setOpen] = useState<boolean | null>(null);
 
-  // Load from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem("sidebar-open");
-    setOpen(stored === null ? true : stored === "true"); // default: open
+    setOpen(stored === null ? true : stored === "true");
   }, []);
 
-  // Save whenever state changes
   useEffect(() => {
     if (open !== null) {
       localStorage.setItem("sidebar-open", String(open));
     }
   }, [open]);
 
-  if (open === null) return null; // prevent flicker
+  // Define menus for each role
 
-  const hrMenus = [
-    { name: "Dashboard", href: "/hr/dashboard", icon: LayoutDashboard },
-    // { name: "Jobs", href: "/hr/jobs", icon: Briefcase },
-    { name: "Interviews", href: "/hr/interviews", icon: CalendarCheck },
-    { name: "Applications", href: "/hr/applications", icon: FileText },
-    { name: "Candidates", href: "/candidates", icon: Users },
-    { name: "Recruiters", href: "/hr/recruiters", icon: UserCircle },
-    // { name: "Chat", href: "/hr/chat", icon: MessageCircle },
-    // { name: "Questions Bank", href: "/hr/questions", icon: Folder },
-    // { name: "Calendar", href: "/hr/calendar", icon: Calendar },
-  ];
+ const hrMenus = [
+  { name: "Dashboard", href: "/hr/dashboard", icon: LayoutDashboard },
+  // { name: "Jobs", href: "/hr/jobs", icon: Briefcase },
+  { name: "Interviews", href: "/hr/interviews", icon: CalendarCheck },
+  { name: "Applications", href: "/hr/applications", icon: FileText },
+  { name: "Candidates", href: "/candidates", icon: Users },
+  { name: "Recruiters", href: "/hr/recruiters", icon: UserCircle },
+  // { name: "Chat", href: "/hr/chat", icon: MessageCircle },
+  // { name: "Questions Bank", href: "/hr/questions", icon: Folder },
+  // { name: "Calendar", href: "/hr/calendar", icon: Calendar },
+];
+
 
   const interviewerMenus = [
     { name: "My Interviews", href: "/interviewer/dashboard", icon: CalendarCheck },
   ];
 
   const candidateMenus = [
-    { name: "My Application", href: "/candidates", icon: Users },
+    { name: "My Application", href: "/candidate/status", icon: Users },
   ];
-
-  let menus: MenuItem[] = [];
+  
+let menus: MenuItem[] = [];
   if (userRole === 'HR_MANAGER') {
     menus = hrMenus;
   } else if (userRole === 'INTERVIEWER') {
@@ -89,43 +90,38 @@ export default function Sidebar() {
     return null; // Don't show the sidebar if the user is not logged in
   }
 
-
   return (
     <div className="relative flex">
-      {/* Sidebar */}
       <aside
-        className={`vh-100 transition-all duration-50 border border-[#708993]  ${open ? "w-72" : "w-16"
-          }`}
+        className={`vh-100 transition-all duration-300 border-r border-[#708993] flex flex-col ${open ? "w-72" : "w-20"}`}
         style={{ backgroundColor: "#19183B" }}
       >
-        {/* Logo */}
-        <div className="flex items-center justify-center py-5 border-[#708993]">
+        <div className="flex items-center justify-center py-5 border-b border-[#708993] h-20">
           {open ? (
             <Link href="/" className="flex items-baseline">
-              <span className="text-[#A1C2BD] font-bold text-xl">IM</span>
-              <span className="ml-2 text-[#E7F2EF] text-lg">Portal</span>
+              <span className="text-[#A1C2BD] font-bold text-2xl">IM</span>
+              <span className="ml-2 text-[#E7F2EF] text-xl">Portal</span>
             </Link>
           ) : (
             <Link href="/">
-            <span className="text-[#A1C2BD] font-bold text-xl">IMP</span>
+              <span className="text-[#A1C2BD] font-bold text-2xl">IM</span>
             </Link>
           )}
         </div>
 
-
-        {/* Menu */}
-        <nav className="mt-5">
+        <nav className="flex-1 mt-6">
           {menus.map((menu, idx) => (
-            <Link
-              key={idx}
-              href={menu.href}
-              className="flex items-center gap-3 px-4 py-2 rounded-md transition-colors duration-200"
-              style={{
-                color: "#A1C2BD",
-              }}
+            <Link key={idx} href={menu.href}
+              className={`flex items-center gap-x-4 p-3 m-2 rounded-lg text-lg transition-colors duration-200 ${
+                pathname === menu.href
+                  ? "bg-[#A1C2BD] text-[#19183B]"
+                  : "text-[#A1C2BD] hover:bg-[#2c2a5a]"
+              }`}
             >
-              <menu.icon size={20} />
-              {open && <span>{menu.name}</span>}
+              <div className="min-w-[40px] flex justify-center">
+                 <menu.icon size={24} />
+              </div>
+              {open && <span className="font-medium">{menu.name}</span>}
             </Link>
           ))}
         </nav>
@@ -143,16 +139,12 @@ export default function Sidebar() {
         </div>
       </aside>
 
-      {/* Toggle button */}
       <button
         onClick={() => setOpen(!open)}
-        className="absolute -right-3 top-12 border rounded-full p-1"
-        style={{
-          backgroundColor: "#A1C2BD",
-          color: "#19183B",
-        }}
+        className="absolute -right-3 top-20 z-10 border rounded-full p-1.5 transition-transform duration-300 hover:scale-110"
+        style={{ backgroundColor: "#A1C2BD", color: "#19183B" }}
       >
-        {open ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+        {open ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
       </button>
     </div>
   );

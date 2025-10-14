@@ -40,3 +40,20 @@ body {
 .btn-warning {
   @apply px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 text-sm disabled:bg-gray-400;
 }
+
+
+
+@keyframes indeterminate-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-indeterminate-progress {
+  animation: indeterminate-progress 1.5s infinite ease-in-out;
+  transform-origin: left;
+  width: 50%; /* The moving bar will be 50% of the container width */
+}
