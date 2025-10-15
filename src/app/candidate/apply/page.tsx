@@ -1,16 +1,21 @@
-// app/CandidatePage.tsx
+
 
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation"; // Make sure useRouter is imported
 import ResumeUploadModal, { ExtractedData } from "@/components/ResumeUploadModal";
 import CandidateForm from "@/components/CandidateForm";
+import { Loader } from "lucide-react";
 
-export default function CandidatePage() {
+export default function ApplyPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter(); // Initialize the router
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [showCandidateForm, setShowCandidateForm] = useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
-  
+
   // --- NEW: State to track if the initial resume upload was successful ---
   const [resumeUploaded, setResumeUploaded] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -23,8 +28,10 @@ export default function CandidatePage() {
   const handleCloseModal = () => {
     // User closed the modal WITHOUT uploading. Show the form.
     setIsModalOpen(false);
-    setShowCandidateForm(true); 
+    setShowCandidateForm(true);
   };
+
+  
 
   // --- MODIFIED: Now accepts the file object along with extracted data ---
   const handleDataExtracted = (data: ExtractedData, file: File) => {
@@ -37,12 +44,19 @@ export default function CandidatePage() {
     setResumeUploaded(true); // --- NEW: Mark that the upload was successful
   };
 
-  const handleCandidateFormSubmitSuccess = () => {
-    setShowCandidateForm(false);
-    setShowSuccessMessage(true);
-    setExtractedData(null);
-    setResumeFile(null);
-    setResumeUploaded(false); // Reset for a new application
+  // const handleCandidateFormSubmitSuccess = () => {
+  //   setShowCandidateForm(false);
+  //   setShowSuccessMessage(true);
+  //   setExtractedData(null);
+  //   setResumeFile(null);
+  //   setResumeUploaded(false); // Reset for a new application
+  // };
+
+   const handleCandidateFormSubmitSuccess = () => {
+    // On successful submission, redirect the user to their new status page.
+    alert("Application submitted successfully! Redirecting you to your status page.");
+    router.push('/candidate/status');
+    router.refresh(); // Optional: Forces a hard refresh to ensure middleware logic is re-evaluated
   };
 
   const handleStartNewApplication = () => {

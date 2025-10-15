@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { Prisma } from '@prisma/client'; // <-- We only need to import the main namespace
+import { getAuthSession } from '@/lib/auth';
+
 
 // HELPER FUNCTION to generate a unique ID for the candidate
 const generateCandidateId = async () => {
@@ -15,6 +17,12 @@ const generateCandidateId = async () => {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await getAuthSession();
+
+  // Security check: only authenticated users can submit
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized: You must be logged in to submit an application.' }, { status: 401 });
+  }
   try {
     const formData = await req.formData();
     const jsonDataString = formData.get('jsonData') as string | null;
@@ -44,12 +52,17 @@ export async function POST(req: NextRequest) {
 
     const candidateId = await generateCandidateId();
     const candidateData = {
+       user: {
+        connect: {
+          id: session.user.id, // Connect to the logged-in user's ID
+        },
+      },
       candidateId,
       skills: data.skills || [],
       firstName: data.firstName,
       middleName: data.middleName,
       lastName: data.lastName,
-      email: data.email,
+      // email: data.email,
       phone: data.phone,
       title: data.title,
       company: data.company,

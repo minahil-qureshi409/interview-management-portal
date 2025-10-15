@@ -1,3 +1,5 @@
+// app/layout.tsx
+
 // import 'bootstrap/dist/css/bootstrap.min.css';
 "use client"; 
 import './globals.css';
@@ -13,32 +15,32 @@ import Providers from "./providers";
 export default function RootLayout({ children }: { children: ReactNode }) {
    const pathname = usePathname();
   
-  // A list of routes that should NOT have the main app layout (Sidebar/Header)
-  const noLayoutRoutes = ['/auth/signin'];
+  // A list of routes that will use the simple, full-screen layout
+  const simpleLayoutRoutes = ['/auth/signin', '/unauthorized'];
+  const isSimpleLayout = simpleLayoutRoutes.includes(pathname);
 
-  // Check if the current route is one of the no-layout routes
-  const isNoLayoutRoute = noLayoutRoutes.includes(pathname);
   return (
     <html lang="en">
-      <body className="antialiased bg-white">
+      {/* --- THIS IS THE FIX --- */}
+      {/* We conditionally set the body's background color. */}
+      {/* The sign-in page wants 'bg-gray-50', the main app wants 'bg-white'. */}
+      <body className={`antialiased ${isSimpleLayout ? 'bg-gray-50' : 'bg-white'}`}>
          <Providers>
-          {isNoLayoutRoute ? (
-            // If it's a no-layout route (like sign-in), just render the page content directly
+          {isSimpleLayout ? (
+            // For simple routes, just render the page content directly.
             children
-          ) :(
-        <SidebarProvider>
-          <div className="flex min-h-screen">
-            {/* Sidebar */}
-            <Sidebar />
-
-            {/* Main Content Area */}
-            <div className="flex flex-col flex-1">
-              <Header />
-              <main className="flex-1 p-6">{children}</main>
-              <Footer />
-            </div>
-          </div>
-        </SidebarProvider>
+          ) : (
+            // For main app routes, render the full layout with Sidebar, Header, etc.
+            <SidebarProvider>
+              <div className="flex min-h-screen">
+                <Sidebar />
+                <div className="flex flex-col flex-1">
+                  <Header />
+                  <main className="flex-1 p-6">{children}</main>
+                  <Footer />
+                </div>
+              </div>
+            </SidebarProvider>
           )}
         </Providers>
       </body>

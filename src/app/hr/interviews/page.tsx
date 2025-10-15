@@ -3,12 +3,62 @@
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import InterviewTableActions from '@/components/InterviewTableActions'; // Import the new component
+import { getAuthSession } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import { Prisma, ApplicationStatus } from '@prisma/client'; // Import Prisma types
+
 
 async function getScheduledInterviews() {
+  const session = await getAuthSession();
+  if (!session?.user) redirect('/auth/signin');
+
+  const userRole = session.user.role;
+  const userName = session.user.name;
+
+  // --- THIS IS THE CLEANER, CORRECTED LOGIC ---
+  // We use 'const' and build the where clause based on the role.
+  const baseWhereClause: Prisma.CandidateWhereInput = {
+    status: 'INTERVIEW_SCHEDULED',
+  };
+
+  const getWhereClause = () => {
+    if (userRole === 'HR_MANAGER') {
+      // HR Managers see all scheduled interviews.
+      return baseWhereClause;
+    }
+
+    if (userRole === 'INTERVIEWER') {
+      if (!userName) {
+        console.warn("[Data Fetch] Interviewer is missing a name. Returning no interviews.");
+        // Return a clause that will find nothing
+        return { id: -1 }; 
+      }
+      // Interviewers see only interviews assigned to them.
+      return {
+        ...baseWhereClause,
+        interviews: {
+          some: {
+            interviewerName: userName,
+          },
+        },
+      };
+    }
+
+    // Any other role (e.g., CANDIDATE) should see nothing on this page.
+    // Return a clause that is guaranteed to find no records.
+    return { id: -1 }; 
+  };
+
+  const whereClause = getWhereClause();
+
+  // If the whereClause is designed to find nothing, we can return early.
+  if (whereClause.id === -1) {
+    return [];
+  }
+  // --- END OF CLEANER LOGIC ---
+  
   const candidates = await prisma.candidate.findMany({
-    where: {
-      status: 'INTERVIEW_SCHEDULED',
-    },
+    where: whereClause,
     include: {
       interviews: {
         orderBy: {

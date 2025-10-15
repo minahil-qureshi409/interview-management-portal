@@ -2,14 +2,10 @@
 
 import { ReactNode } from "react";
 
-// This is a minimal layout for authentication pages.
-// It has no sidebar, header, or extra padding.
+// This layout is for authentication pages.
+// It does NOT render <html> or <body>. It just provides a wrapper.
 export default function AuthLayout({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en">
-      <body>
-        {children}
-      </body>
-    </html>
-  );
+  // We return the children directly, without adding any extra structure.
+  // The background color will be handled by the page itself.
+  return <>{children}</>;
 }

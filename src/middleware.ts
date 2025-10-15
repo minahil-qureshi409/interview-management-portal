@@ -1,60 +1,65 @@
 // src/middleware.ts
 
-import { withAuth } from "next-auth/middleware";
+import { withAuth, NextRequestWithAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
-import { NextRequest } from 'next/server';
 
 export default withAuth(
-  // `withAuth` augments your `Request` with the user's token.
-  function middleware(req) {
+  // The 'req' object is automatically typed, and we know token.role exists.
+  async function middleware(req: NextRequestWithAuth) {
     const token = req.nextauth.token;
-     const { pathname } = req.nextUrl;
-    
-    // --- NEW: ROLE-BASED REDIRECTION LOGIC ---
-    // This runs for any logged-in user trying to access the root or a generic dashboard.
-    if (token && (pathname === '/' || pathname === '/dashboard')) {
+    const { pathname } = req.nextUrl;
+
+    if (!token) {
+      return NextResponse.redirect(new URL('/auth/signin', req.url));
+    }
+
+    // --- INITIAL LOGIN REDIRECTION (NO DATABASE CALLS) ---
+    // Redirects any user who lands on the root page.
+    if (pathname === '/') {
       if (token.role === 'HR_MANAGER') {
-        return NextResponse.redirect(new URL('/hr/dashboard', req.url));
+        return NextResponse.redirect(new URL('/hr/applications', req.url));
       }
       if (token.role === 'INTERVIEWER') {
         return NextResponse.redirect(new URL('/interviewer/dashboard', req.url));
       }
       if (token.role === 'CANDIDATE') {
-        return NextResponse.redirect(new URL('/candidates', req.url));
+        // Always send a candidate to their main status page.
+        // This page will then decide if a redirect to /apply is needed.
+        return NextResponse.redirect(new URL('/candidate/status', req.url));
       }
     }
-    // --- END OF NEW LOGIC ---
 
-    // --- Your existing role protection logic ---
-    // const unauthorizedUrl = new URL('/unauthorized', req.url);
+    // --- SIMPLE ROLE-BASED ROUTE PROTECTION ---
+    const unauthorizedUrl = new URL('/unauthorized', req.url);
 
-    // --- HR MANAGER Routes ---
-    // If the user is trying to access HR routes but is not an HR_MANAGER
-    if (req.nextUrl.pathname.startsWith("/hr") && token?.role !== "HR_MANAGER") {
-      return new NextResponse("You are not authorized!"); // Or redirect
+    // An INTERVIEWER needs to see candidate profiles, but not other HR pages.
+    if (pathname.startsWith('/hr/applications/') && token.role === 'INTERVIEWER') {
+      return NextResponse.next(); // Allow access to specific candidate profiles
     }
 
-    // --- INTERVIEWER Routes ---
-    if (req.nextUrl.pathname.startsWith("/interviewer") && token?.role !== "INTERVIEWER") {
-      return new NextResponse("You are not authorized!");
+    if (pathname.startsWith('/hr') && token.role !== 'HR_MANAGER') {
+      return NextResponse.redirect(unauthorizedUrl);
+    }
+    if (pathname.startsWith('/interviewer') && token.role !== 'INTERVIEWER') {
+      return NextResponse.redirect(unauthorizedUrl);
+    }
+    if (pathname.startsWith('/candidate') && token.role !== 'CANDIDATE') {
+      return NextResponse.redirect(unauthorizedUrl);
     }
 
-    // --- CANDIDATE Routes ---
-    if (req.nextUrl.pathname.startsWith("/candidate") && token?.role !== "CANDIDATE") {
-      return new NextResponse("You are not authorized!");
-    }
-
-    // Allow the request to proceed if no rules match
     return NextResponse.next();
   },
   {
-    callbacks: {
-      authorized: ({ token }) => !!token, // User must be logged in to access any page matched by the matcher
-    },
+    callbacks: { authorized: ({ token }) => !!token },
+    pages: { signIn: "/auth/signin" },
   }
 );
 
-// This matcher ensures the middleware runs on your protected routes
 export const config = {
-  matcher: [ '/', '/dashboard',"/hr/:path*", "/interviewer/:path*", "/candidate/:path*"],
+  matcher: [
+    '/',
+    '/hr/:path*',
+    '/interviewer/:path*',
+    '/candidate/:path*',
+  ],
 };

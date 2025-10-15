@@ -1,3 +1,5 @@
+// prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,26 +9,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Job {
-  id           Int           @id @default(autoincrement())
-  title        String
-  department   String
-  description  String
-  requirements String
-  applications Application[]
-}
-
-model Application {
-  id         Int      @id @default(autoincrement())
-  jobId      Int
-  name       String
-  email      String
-  resumeUrl  String
-  skills     String?
-  experience String?
-  createdAt  DateTime @default(now())
-  job        Job      @relation(fields: [jobId], references: [id])
-}
 
 enum Role {
   CANDIDATE
@@ -34,21 +16,20 @@ enum Role {
   HR_MANAGER
 }
 
-// --- NEW: User Model (for authentication) ---
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  role          Role      @default(CANDIDATE) // Default new users to Candidate
-
-    password      String?
-  accounts      Account[]
-  sessions      Session[]
+  id                 String      @id @default(cuid())
+  name               String?
+  email              String?     @unique
+  emailVerified      DateTime?
+  image              String?
+  role               Role        @default(CANDIDATE)
+  password           String?
+  candidateProfile   Candidate? // A user might have one candidate profile
+  assignedInterviews Interview[] @relation("InterviewerAppointments")
+  accounts           Account[]
+  sessions           Session[]
 }
 
-// --- NEW: NextAuth.js specific models ---
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -62,8 +43,7 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -94,37 +74,36 @@ enum ApplicationStatus {
 }
 
 model Candidate {
-  id          Int     @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
   firstName   String
   middleName  String?
   lastName    String
-  candidateId String? @unique
+  candidateId String?  @unique
   title       String?
   company     String?
-  email       String  @unique
   phone       String?
-
-  status ApplicationStatus @default(APPLIED)
+  // NOTE: 'email' field has been removed. We will get it from the related 'user'.
+  status      ApplicationStatus @default(APPLIED)
+  skills      String[]
+  moreInfo    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   workExperience WorkExperience[]
   education      Education[]
   languageSkills LanguageSkill[]
   travelMobility TravelMobility[]
   documents      Document[]
-  moreInfo       String?
-  skills         String[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  interviews Interview[] 
+  interviews     Interview[]
 }
 
 model WorkExperience {
   id               Int       @id @default(autoincrement())
   companyName      String
   title            String
-   currentlyWorking Boolean? 
+  currentlyWorking Boolean?
   fromDate         DateTime
   endDate          DateTime?
   country          String?
@@ -134,16 +113,16 @@ model WorkExperience {
 }
 
 model Education {
-  id          Int       @id @default(autoincrement())
-  institute   String
-  specifyOther String?  
-  degree      String?
-  major       String?
-  fromDate    DateTime?
-  endDate     DateTime?
-  country     String?
-  candidateId Int
-  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  id           Int       @id @default(autoincrement())
+  institute    String
+  specifyOther String?
+  degree       String?
+  major        String?
+  fromDate     DateTime?
+  endDate      DateTime?
+  country      String?
+  candidateId  Int
+  candidate    Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 }
 
 model LanguageSkill {
@@ -174,14 +153,17 @@ model Document {
 }
 
 model Interview {
-  id              Int      @id @default(autoincrement())
-  interviewDate   DateTime
-  interviewType   String   // e.g., "Technical Screening", "HR Round"
-  interviewerName String
-  meetLink        String?
-  notes           String?
-  feedback        String?
-  createdAt       DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  interviewDate DateTime
+  interviewType String
+  meetLink      String?
+  notes         String?
+  feedback      String?
+  createdAt     DateTime @default(now())
+  
+  interviewerId String
+  interviewer   User     @relation("InterviewerAppointments", fields: [interviewerId], references: [id])
+  // NOTE: 'interviewerName' field has been removed. We will get it from the related 'interviewer'.
 
   candidateId Int
   candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)

@@ -1,13 +1,16 @@
 // app/candidates/[id]/page.tsx (or wherever your component is located)
 
 import { PrismaClient } from '@prisma/client';
-import { notFound } from 'next/navigation';
-import { CandidateActions } from '@/components/candidatesActions'; // Assuming this component exists
+import { notFound, redirect } from 'next/navigation';
+import { CandidateActions } from '@/components/CandidatesActions'; // Assuming this component exists
+// import { getAuthSession } from '@/lib/auth'; // Import the session helper
 
 const prisma = new PrismaClient();
 
 // fetches a single candidate with ALL their related data
 async function getCandidateProfile(id: number) {
+  //   const session = await getAuthSession();
+  // if (!session?.user) redirect('/auth/signin');
   const candidate = await prisma.candidate.findUnique({
     where: { id },
     // Use 'select' to explicitly include optional fields and relations
@@ -17,9 +20,13 @@ async function getCandidateProfile(id: number) {
       middleName: true,
       lastName: true,
       title: true,
-      email: true,
       phone: true,
       status: true,
+       user: {
+        select: {
+          email: true,
+        },
+      },
       // --- all the relations you need ---
       workExperience: true,
       education: true,
@@ -29,9 +36,21 @@ async function getCandidateProfile(id: number) {
         orderBy: {
           interviewDate: 'desc',
         },
+        include: {
+          interviewer: {
+            select: { email: true }
+          }
+        }
       },
     },
   });
+
+  // --- SECURITY CHECK ---
+  // If the logged-in user is a CANDIDATE, we must verify they are only viewing their own profile.
+  // if (session.user.role === 'CANDIDATE' && candidate?.email !== session.user.email) {
+  //   // They are trying to view someone else's profile. Block them.
+  //   return null; 
+  // }
   return candidate;
 }
 // The page component receives `params` which contains the dynamic segment (`id`)
@@ -62,7 +81,7 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
             </h1>
             <p className="text-xl text-gray-600 mt-1">{candidate.title || 'No Title Provided'}</p>
             <div className="text-md text-gray-500 mt-2 space-x-4">
-              <span>{candidate.email}</span>
+              <span>{candidate.user.email}</span>
               <span>|</span>
               <span>{candidate.phone || 'No Phone Provided'}</span>
             </div>
@@ -73,7 +92,7 @@ export default async function CandidateProfilePage({ params }: { params: { id: s
 
         <hr className="my-6" />
 
-        {/* Scheduled Interviews & Feedback Section */}
+        
         {/* Scheduled Interviews & Feedback Section */}
         {candidate.interviews.length > 0 && (
           <div className="mt-8">

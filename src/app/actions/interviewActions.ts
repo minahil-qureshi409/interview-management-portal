@@ -9,18 +9,31 @@ import { revalidatePath } from "next/cache";
 interface InterviewFormData {
   interviewDate: string; // easier for form inputs
   interviewType: string;
-  interviewerName: string;
+  interviewerEmail: string;
   meetLink?: string;
   notes?: string;
 }
 
 export async function scheduleInterview(candidateId: number, formData: InterviewFormData, interviewId?: number) {
   try {
+     const interviewer = await prisma.user.findUnique({
+      where: { email: formData.interviewerEmail },
+    });
+
+    // 2. Handle cases where the user doesn't exist or isn't an interviewer.
+    if (!interviewer) {
+      return { success: false, message: `No user found with the email '${formData.interviewerEmail}'. Please ask them to create an account first.` };
+    }
+    if (interviewer.role !== 'INTERVIEWER' && interviewer.role !== 'HR_MANAGER') {
+      return { success: false, message: `User '${interviewer.name}' does not have permission to conduct interviews. Please update their role.`};
+    }
+
+    // 3. Prepare the data to be saved in the database, using the interviewer's ID.
     const dataToSave = {
       candidateId,
       interviewDate: new Date(formData.interviewDate),
       interviewType: formData.interviewType,
-      interviewerName: formData.interviewerName,
+      interviewerId: interviewer.id, // Use the user's ID
       meetLink: formData.meetLink || null,
       notes: formData.notes || null,
     };

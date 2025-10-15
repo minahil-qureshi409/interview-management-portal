@@ -7,7 +7,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { registerUser } from '@/app/actions/userActions';
 import { FaGoogle } from 'react-icons/fa';
-import { User, Mail, Lock } from 'lucide-react';
+import { Cube } from 'lucide-react';
 
 export default function SignInPage() {
   const [isLoginView, setIsLoginView] = useState(true);
@@ -20,46 +20,38 @@ export default function SignInPage() {
     setIsLoading(true);
     setError(null);
     const formData = new FormData(e.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
 
     if (isLoginView) {
-      // Handle Login
-      const email = formData.get('email') as string;
-      const password = formData.get('password') as string;
       const result = await signIn('credentials', { redirect: false, email, password });
-
       if (result?.error) {
         setError("Invalid email or password.");
+        setIsLoading(false);
       } else {
-        router.push('/');
+        router.push('/'); // Redirect to root, middleware will handle the rest
       }
     } else {
-      // Handle Sign Up
       const result = await registerUser(formData);
       if (result.success) {
-        // Automatically sign in after successful registration
-        const signInResult = await signIn('credentials', {
-          redirect: false,
-          email: formData.get('email') as string,
-          password: formData.get('password') as string,
-        });
+        const signInResult = await signIn('credentials', { redirect: false, email, password });
         if (signInResult?.ok) {
-          router.push('/');
+          router.push('/'); // Redirect to root, middleware will handle the rest
         } else {
           setError("Account created, but automatic login failed. Please sign in.");
-          setIsLoginView(true);
+          setIsLoading(false);
         }
       } else {
         setError(result.message);
+        setIsLoading(false);
       }
     }
-    setIsLoading(false);
   };
   
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
-    await signIn('google', { callbackUrl: '/' });
+    await signIn('google', { callbackUrl: '/' }); // Redirect to root
   };
-
   return (
     // Main container - centers the form vertically and horizontally
     <div className="flex h-screen items-center justify-center bg-gray-50 p-5 shadow-lg">

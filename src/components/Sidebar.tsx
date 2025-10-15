@@ -130,7 +130,7 @@ export default function Sidebar() {
           ))}
         </nav>
 
-        <div className="p-2 border-t border-[#708993]">
+        {/* <div className="p-2 border-t border-[#708993]">
           <button
             onClick={() => signOut({ callbackUrl: '/auth/signin' })}
             className="flex items-center gap-x-4 p-3 w-full rounded-lg text-[#A1C2BD] hover:bg-[#c93c3c] hover:text-white transition-colors duration-200"
@@ -140,7 +140,7 @@ export default function Sidebar() {
             </div>
             {open && <span className="font-medium">Sign Out</span>}
           </button>
-        </div>
+        </div> */}
       </aside>
 
       {/* Toggle button */}

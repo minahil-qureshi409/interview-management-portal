@@ -1,6 +1,7 @@
 "use client";
 import { Bell, Search, LogOut } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 export default function Header() {
   const pathname = usePathname();
@@ -38,7 +39,21 @@ export default function Header() {
         </div>
 
         {/* Logout Icon */}
-        <LogOut className="w-6 h-5 text-[#708993] cursor-pointer hover:text-[#19183B]" />
+        <LogOut
+          onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+          className="w-6 h-5 text-[#708993] cursor-pointer hover:text-[#19183B]"
+        />
+
+        {/* <button
+          onClick={() => setOpen(!open)}
+          className="absolute -right-3 top-12 border rounded-full p-1"
+          style={{
+            backgroundColor: "#A1C2BD",
+            color: "#19183B",
+          }}
+        >
+          {open ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+        </button> */}
 
         {/* User Avatar */}
         <div className="w-9 h-9 rounded-full bg-[#A1C2BD] flex items-center justify-center text-[#19183B] font-semibold cursor-pointer">

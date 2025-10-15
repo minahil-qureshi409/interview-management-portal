@@ -4,13 +4,16 @@
 
 import { useState, FormEvent,useEffect } from 'react';
 import { scheduleInterview } from '@/app/actions/interviewActions';
-import { Interview } from '@prisma/client';
+import { Interview,User } from '@prisma/client';
+
+// The initialData prop will now include the interviewer's user details
+type InterviewWithInterviewer = Interview & { interviewer: Pick<User, 'email'> };
 
 interface ScheduleInterviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   candidateId: number;
-   initialData?: Interview | null; 
+  initialData?: InterviewWithInterviewer | null; 
 }
 
 export default function ScheduleInterviewModal({ isOpen, onClose, candidateId, initialData  }: ScheduleInterviewModalProps) {
@@ -21,7 +24,7 @@ export default function ScheduleInterviewModal({ isOpen, onClose, candidateId, i
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [type, setType] = useState('Technical Screening');
-  const [interviewer, setInterviewer] = useState('');
+  const [interviewerEmail, setInterviewerEmail] = useState('');
   const [meetLink, setMeetLink] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -33,7 +36,7 @@ export default function ScheduleInterviewModal({ isOpen, onClose, candidateId, i
       setDate(interviewDate.toISOString().split('T')[0]);
       setTime(interviewDate.toTimeString().split(' ')[0].substring(0, 5));
       setType(initialData.interviewType);
-      setInterviewer(initialData.interviewerName);
+      setInterviewerEmail(initialData.interviewer.email || '');
       setMeetLink(initialData.meetLink || '');
       setNotes(initialData.notes || '');
     } else {
@@ -41,7 +44,7 @@ export default function ScheduleInterviewModal({ isOpen, onClose, candidateId, i
       setDate('');
       setTime('');
       setType('Technical Screening');
-      setInterviewer('');
+      setInterviewerEmail('');
       setMeetLink('');
       setNotes('');
     }
@@ -72,10 +75,10 @@ export default function ScheduleInterviewModal({ isOpen, onClose, candidateId, i
      const result = await scheduleInterview(candidateId, {
       interviewDate: fullDateString,
       interviewType: type,
-      interviewerName: interviewer,
+      interviewerEmail: interviewerEmail, // Use the new email field
       meetLink,
       notes,
-    }, interviewId); // Pass the optional ID
+    }, interviewId);
     
     setIsSubmitting(false);
 
@@ -113,8 +116,16 @@ export default function ScheduleInterviewModal({ isOpen, onClose, candidateId, i
             </select>
           </div>
           <div>
-            <label htmlFor="interviewer" className="block text-sm font-medium text-gray-700">Interviewer Name</label>
-            <input type="text" id="interviewer" placeholder="e.g., John Doe" value={interviewer} onChange={(e) => setInterviewer(e.target.value)} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"/>
+            <label htmlFor="interviewerEmail" className="block text-sm font-medium text-gray-700">Interviewer Email</label>
+            <input 
+              type="email" 
+              id="interviewerEmail" 
+              placeholder="interviewer@example.com" 
+              value={interviewerEmail} 
+              onChange={(e) => setInterviewerEmail(e.target.value)} 
+              required 
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            />
           </div>
           <div>
             <label htmlFor="meetLink" className="block text-sm font-medium text-gray-700">Meeting Link (Optional)</label>
